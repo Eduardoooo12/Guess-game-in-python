@@ -9,10 +9,6 @@ Um joguinho de adivinhação desenvolvido em Python.
 3. Role até o final e baixe o artefato **Guess-game-windows**
 4. Extraia o arquivo ZIP e execute o `main.exe`
 
-## Como jogar
-
-[Adicione aqui as instruções do seu jogo]
-
 ## Desenvolvimento
 
 Criado com Python 3.12 e PyInstaller para compilação.
