@@ -1,33 +1,53 @@
-name: Build Windows EXE
+name: Build Windows Executable
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    tags:
+      - 'v*'               # Dispara quando você fizer um push de uma tag como v1.0.0, v2.1, etc.
+  workflow_dispatch:       # Permite rodar manualmente pela interface do GitHub
 
 jobs:
   build:
-    runs-on: windows-latest
-    
+    runs-on: windows-latest   # Usa um runner Windows (essencial para gerar .exe)
+
     steps:
-    - name: Checkout código
-      uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    
-    - name: Instalar dependências
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
-    
-    - name: Compilar para EXE com ícone
-      run: pyinstaller --onefile --windowed --icon=momozihlinda.ico main.py
-    
-    - name: Fazer upload do executável
-      uses: actions/upload-artifact@v4
-      with:
-        name: Guess-game-windows
-        path: dist/main.exe
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'   # Ou a versão que você usa
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller colorama   # colorama é necessário para as cores no Windows
+
+      # Opcional: modificar o main.py para importar e iniciar o colorama
+      # Isso garante que as cores funcionem no CMD do Windows sem que o usuário precise instalar nada.
+      - name: Adicionar colorama ao código (se ainda não tiver)
+        run: |
+          $code = Get-Content -Path main.py -Raw
+          if ($code -notmatch "from colorama import init") {
+            $newCode = "from colorama import init`ninit()`n`n$code"
+            Set-Content -Path main.py -Value $newCode
+          }
+
+      - name: Gerar .exe com PyInstaller
+        run: |
+          pyinstaller --onefile --console --name GuessGame main.py
+
+      - name: Upload do executável como artefato (opcional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GuessGame-exe
+          path: dist/GuessGame.exe
+
+      - name: Anexar à Release (se for um push de tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/GuessGame.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
