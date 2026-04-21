@@ -3,12 +3,12 @@ name: Build Windows Executable
 on:
   push:
     tags:
-      - 'v*'               # Dispara quando você fizer um push de uma tag como v1.0.0, v2.1, etc.
-  workflow_dispatch:       # Permite rodar manualmente pela interface do GitHub
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest   # Usa um runner Windows (essencial para gerar .exe)
+    runs-on: windows-latest
 
     steps:
       - name: Checkout do código
@@ -17,16 +17,15 @@ jobs:
       - name: Instalar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'   # Ou a versão que você usa
+          python-version: '3.12'
 
       - name: Instalar dependências
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller colorama   # colorama é necessário para as cores no Windows
+          pip install pyinstaller colorama
 
-      # Opcional: modificar o main.py para importar e iniciar o colorama
-      # Isso garante que as cores funcionem no CMD do Windows sem que o usuário precise instalar nada.
-      - name: Adicionar colorama ao código (se ainda não tiver)
+      # Se você ainda não adicionou o colorama manualmente no main.py, esta etapa insere automaticamente
+      - name: Garantir colorama (opcional)
         run: |
           $code = Get-Content -Path main.py -Raw
           if ($code -notmatch "from colorama import init") {
@@ -34,17 +33,17 @@ jobs:
             Set-Content -Path main.py -Value $newCode
           }
 
-      - name: Gerar .exe com PyInstaller
+      - name: Gerar .exe com ícone
         run: |
-          pyinstaller --onefile --console --name GuessGame main.py
+          pyinstaller --onefile --console --name GuessGame --icon=momozihlinda.ico main.py
 
-      - name: Upload do executável como artefato (opcional)
+      - name: Upload do artefato
         uses: actions/upload-artifact@v4
         with:
           name: GuessGame-exe
           path: dist/GuessGame.exe
 
-      - name: Anexar à Release (se for um push de tag)
+      - name: Anexar à Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
